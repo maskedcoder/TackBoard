@@ -1,0 +1,26 @@
+<%- include('../layouts/_header'); %>
+    <h1><%= title %></h1>
+    <form id="edit-form" action="/users/<%= user.id %>">
+        <%- include('_form'); %>
+    </form>
+    <script type="text/javascript" src="/javascripts/jquery-validate.min.js"></script>
+    <script type="text/javascript">
+        jQuery(function ($) {
+            $('#edit-form').validate({
+                submitHandler: function (form) {
+                    var data = $(form).serialize();
+                    $.ajax({
+                        method: 'PUT',
+                        url: form.action,
+                        data: data,
+                        dataType: 'json'
+                    }).success(function () {
+                        window.location.href = "/users/<%= user.id %>";
+                    }).error(function () {
+                        alert("Invalid entry. Please re-enter the data.");
+                    });
+                }
+            });
+        });
+    </script>
+<%- include('../layouts/_footer'); %>

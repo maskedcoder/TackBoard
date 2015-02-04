@@ -1,0 +1,28 @@
+<%- include('../layouts/_header'); %>
+    <h1><%= title %></h1>
+    <h2><a href="/users">Home</a></h2>
+    <p><b>Name:</b> <%= user.name %></p>
+    <p><b>Password:</b> <%= user.password %></p>
+    <a href="<%= user.id %>/edit">Edit</a>
+    <a href="#destroy">Destroy</a>
+<script type="text/javascript">
+    jQuery(function ($) {
+        $('a[href="#destroy"]').on('click', function (e) {
+            e.preventDefault();
+            if (confirm("Are you sure you want to delete user '<%= user.name %>'?\n\n" + 
+                        "This action cannot be undone.")) {
+                $.ajax({
+                    method: 'DELETE',
+                    url: '',
+                    dataType: 'json'
+                }).success(function () {
+                    window.location.href = "/users";
+                }).error(function () {
+                    alert("The user could not be deleted.");
+                });
+            }
+            return false;
+        });
+    });
+</script>
+<%- include('../layouts/_footer'); %>

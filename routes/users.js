@@ -2,44 +2,60 @@ var models  = require('../models');
 var express = require('express');
 var router = express.Router();
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-    models.User.findAll({
-        include: models.Post
-    }).then(function(users) {
-    res.render('user/index', {
-      title: 'All users | TackBoard',
-      users: users
-    });
-  });
-});
+var respondTo = function (request, response, formats) {
+    var format = request.accepts(Object.keys(formats));
+    if (format === undefined)
+        response.status(406).send("Not Acceptable");
+    else
+        formats[format]();
+};
 
-/* GET form to create a user */
+router.route('/')
+    // GET index action
+    .get(function (req, res) {
+        models.User.findAll({
+            include: models.Post
+        }).then(function (users) {
+            respondTo(req, res, {
+                'html': function () {
+                    res.render('users/index', {
+                        title: 'All users | TackBoard',
+                        users: users
+                    });
+                },
+                'json': function () {
+                    res.json(users);
+                }
+            });
+        });
+    })
+    // POST new user action
+    .post(function (req, res) {
+        var newUser = req.body;
+        if (!newUser.name || !newUser.password) {
+            res.status(400).send("Invalid - missing name and/or password");
+            return false;
+        }
+        models.User.create({
+            name: newUser.name,
+            password: newUser.password
+        }).then(function (user) {
+            respondTo(req, res, {
+                'html': function () {
+                    res.redirect(201, '/users/' + user.id);
+                },
+                'json': function () {
+                    res.status(201).json(user);
+                }
+            });
+        });
+    });
+
+// GET form to create a user
 router.get('/new', function (req, res) {
-    res.render('user/new', {
+    res.render('users/new', {
         title: 'Creating new user | TackBoard',
         user: models.User.build({})
-    });
-});
-
-/* POST the new user */
-router.post('/create', function (req, res, next) {
-    models.User.create({
-        name: req.body.name,
-        password: req.body.password
-    }).then(function (user) {
-        res.redirect('/users/'+user.id);
-    })
-});
-
-/* GET the user destroyed */
-router.get('/:user_id/destroy', function (req, res) {
-    models.User.find({
-        where: { id: req.params.user_id }
-    }).then(function (user) {
-        user.destroy().then(function () {
-            res.redirect('/users');
-        });
     });
 });
 
@@ -48,38 +64,60 @@ router.get('/:user_id/edit', function (req, res) {
     models.User.find({
         where: { id: req.params.user_id }
     }).then(function (user) {
-        res.render('user/edit', {
+        res.render('users/edit', {
           title: 'Editing '+user.name+' | TackBoard',
           user: user
         });
     });
 });
 
-/* POST the updated user */
-router.post('/:user_id/update', function (req, res) {
-    models.User.find({
-        where: { id: req.params.user_id }
-    }).then(function (user) {
-        user.update({
-            name: req.body.name,
-            password: req.body.password
-        }).then(function () {
-            res.redirect('/users/'+user.id);
+router.route('/:user_id/')
+    // GET the user
+    .get(function (req, res, next) {
+        models.User.find({
+            where: { id: req.params.user_id }
+        }).then(function (user) {
+            respondTo(req, res, {
+                'html': function () {
+                    res.render('users/show', {
+                        title: user.name + ' | TackBoard',
+                        user: user
+                    });
+                },
+                'json': function () {
+                    res.json(user);
+                }
+            });
+        });
+    })
+    // DELETE the user
+    .delete(function (req, res) {
+        models.User.find({
+            where: { id: req.params.user_id }
+        }).then(function (user) {
+            user.destroy().then(function () {
+                res.sendStatus(204);
+            });
+        });
+    })
+    // PUT an update on the user
+    .put(function (req, res) {
+        var updatedUser = req.body;
+        if (!updatedUser.name || !updatedUser.password) {
+            res.status(400).send("Invalid - missing name and/or password");
+            return false;
+        }
+        models.User.find({
+            where: { id: req.params.user_id }
+        }).then(function (user) {
+            user.update({
+                name: updatedUser.name,
+                password: updatedUser.password
+            }).then(function (update) {
+                res.status(201).json(update);
+            });
         });
     });
-});
-
-/* GET the user */
-router.get('/:user_id/', function (req, res, next) {
-    models.User.find({
-        where: { id: req.params.user_id }
-    }).then(function (user) {
-        res.render('user/show', {
-            title: user.name+' | TackBoard',
-            user: user
-        });
-    });
-});
 
 
 module.exports = router;

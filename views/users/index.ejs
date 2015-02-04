@@ -1,4 +1,4 @@
-<%- include('../_header'); %>
+<%- include('../layouts/_header'); %>
     <h1><%= title %></h1>
     <a href="/users/new">Create a new user</a>
     <ul>
@@ -6,8 +6,7 @@
         <li>
             <a href="/users/<%= user.id %>"><b><%= user.name %></b></a>
             <a href="/users/<%= user.id %>/edit">Edit</a>
-            <a href="/users/<%= user.id %>/destroy">Destroy</a>
         </li>
     <% }); %>
     </ul>
-<%- include('../_footer'); %>
+<%- include('../layouts/_footer'); %>

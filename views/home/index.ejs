@@ -1,4 +1,4 @@
-<%- include('_header'); %>
+<%- include('../layouts/_header'); %>
 
     <h1><%= title %></h1>
     <p>This is Sequelize greeting you :)</p>
@@ -16,10 +16,9 @@
     <ul>
     <% users.forEach(function (user) { %>
         <li>
-            <%= user.name %>
-            <a href="/users/<%= user.id %>/destroy">Destroy</a>
+            <a href="/users/<%= user.id %>"><%= user.name %></a>
         </li>
     <% }); %>
     </ul>
 
-<%- include('_footer'); %>
+<%- include('../layouts/_footer'); %>

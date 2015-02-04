@@ -7,7 +7,7 @@ router.get('/', function(req, res, next) {
     models.User.findAll({
         include: models.Post
     }).then(function(users) {
-    res.render('index', {
+    res.render('home/index', {
       title: 'Express',
       users: users
     });
