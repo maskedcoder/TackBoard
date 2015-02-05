@@ -37,8 +37,6 @@ router.route('/')
                 title: newPost.title,
                 description: newPost.description
             }).then(function (post) {
-                console.log(JSON.stringify(post));
-                console.log(JSON.stringify(newPost));
                 respondTo(req, res, {
                     'html': function () {
                         res.redirect(201, '/posts/' + post.id);
@@ -78,7 +76,6 @@ router.route('/:post_id/')
                 where: { id: req.params.post_id },
                 include: models.User
             }).then(function (post) {
-                console.log(JSON.stringify(post));
                 respondTo(req, res, {
                     'html': function () {
                         res.render('posts/show', {
@@ -98,7 +95,6 @@ router.route('/:post_id/')
             models.Post.find({
                 where: { id: req.params.post_id }
             }).then(function (post) {
-                console.log(JSON.stringify(post));
                 post.update(updatedPost).then(function (update) {
                     res.status(201).json(update); 
                 });
