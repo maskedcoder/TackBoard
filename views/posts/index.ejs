@@ -1,0 +1,16 @@
+<%- include('../layouts/_header'); %>
+    <h1><%= title %></h1>
+    <a href="/posts/new">Create a new post</a>
+    <ul>
+    <% posts.forEach(function (post) { %>
+        <li>
+            <h3>
+                <a href="/posts/<%= post.id %>"><b><%= post.title %></b></a>
+            </h3>
+            <p><%= post.description %></p>
+            <p><strong>-- <a href="/users/<%= post.UserId %>"><%= post.User.name %></a></strong></p>
+            <a href="/posts/<%= post.id %>/edit">Edit</a>
+        </li>
+    <% }); %>
+    </ul>
+<%- include('../layouts/_footer'); %>

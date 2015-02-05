@@ -1,0 +1,22 @@
+            <fieldset>
+                <p>
+                    <label for="postTitle">Title:</label>
+                    <input id="postTitle" type="text" name="title" value="<%= post.title %>" required/>
+                </p>
+                <p>
+                    <label for="postDescription">Description:</label>
+                    <textarea id="postDescription" name="description" rows="10" cols="50" required><%= post.description %></textarea>
+                </p>
+                <p>
+                    <label for="postUser">Author:</label>
+                    <select id="postUser" name="UserId" required>
+                        <option disabled="disabled">Select a user...</option>
+                        <% users.forEach(function (user) { %>
+                            <option value="<%= user.id %>" <% if (user.id == post.UserId) { %>selected<% } %>><%= user.name %></option>
+                        <% }); %>
+                    </select>
+                </p>
+                <p>
+                    <input type="submit" />
+                </p>
+            </fieldset>

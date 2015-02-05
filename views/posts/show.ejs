@@ -1,0 +1,28 @@
+<%- include('../layouts/_header'); %>
+    <h1><%= post.title %></h1>
+    <h2><a href="/posts">Home</a></h2>
+    <p><%= post.description %></p>
+    <p><strong>-- <a href="/users/<%= post.UserId %>"><%= post.User.name %></a></strong></p>
+    <a href="<%= post.id %>/edit">Edit</a> |
+    <a href="#destroy">Destroy</a>
+<script type="text/javascript">
+    jQuery(function ($) {
+        $('a[href="#destroy"]').on('click', function (e) {
+            e.preventDefault();
+            if (confirm("Are you sure you want to delete post '<%= post.title %>'?\n\n" + 
+                        "This action cannot be undone.")) {
+                $.ajax({
+                    method: 'DELETE',
+                    url: '',
+                    dataType: 'json'
+                }).success(function () {
+                    window.location.href = "/posts";
+                }).error(function () {
+                    alert("The post could not be deleted.");
+                });
+            }
+            return false;
+        });
+    });
+</script>
+<%- include('../layouts/_footer'); %>
