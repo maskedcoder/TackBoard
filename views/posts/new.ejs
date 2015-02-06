@@ -1,26 +1,6 @@
 <%- include('../layouts/_header'); %>
     <h1><%= title %></h1>
-    <form id="new-form" action="/posts" method="POST">
+    <form id="post-form" action="/posts" method="POST" data-method="POST">
         <%- include('_form'); %>
     </form>
-    <script type="text/javascript" src="/javascripts/jquery-validate.min.js"></script>
-    <script type="text/javascript">
-        jQuery(function ($) {
-            $('#new-form').validate({
-                submitHandler: function (form) {
-                    var data = $(form).serialize();
-                    $.ajax({
-                        method: 'POST',
-                        url: form.action,
-                        data: data,
-                        dataType: 'json'
-                    }).success(function (newPost) {
-                        window.location.href = "/posts/" + newPost.id;
-                    }).error(function () {
-                        alert("Invalid entry. Please re-enter the data.");
-                    });
-                }
-            });
-        });
-    </script>
 <%- include('../layouts/_footer'); %>

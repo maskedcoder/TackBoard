@@ -20,3 +20,23 @@
                     <input type="submit" />
                 </p>
             </fieldset>
+            <script type="text/javascript" src="/javascripts/jquery-validate.min.js"></script>
+            <script type="text/javascript">
+                jQuery(function ($) {
+                    $('#post-form').validate({
+                        submitHandler: function (form) {
+                            var data = $(form).serialize();
+                            $.ajax({
+                                method: $(form).data('method'),
+                                url: form.action,
+                                data: data,
+                                dataType: 'json'
+                            }).success(function (post) {
+                                window.location.href = "/posts/" + post.id;
+                            }).error(function () {
+                                alert("Invalid entry. Please re-enter the data.");
+                            });
+                        }
+                    });
+                });
+            </script>

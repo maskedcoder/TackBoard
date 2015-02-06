@@ -38,7 +38,10 @@ router.route('/')
             }).then(function (post) {
                 respondTo(req, res, {
                     'html': function () {
-                        res.redirect(201, '/posts/' + post.id);
+                        res.status(201)
+                            .set('url', '/posts/' + post.id)
+                            .set('Refresh', '0')
+                            .send();
                     },
                     'json': function () {
                         res.status(201).json(post);
@@ -96,6 +99,20 @@ router.route('/:post_id/')
             }).then(function (post) {
                 post.update(updatedPost).then(function (update) {
                     res.status(201).json(update); 
+                });
+            });
+        })
+        // POST new data into the post
+        .post(function (req, res) {
+            var updatedPost = req.body;
+            models.Post.find({
+                where: { id: req.params.post_id }
+            }).then(function (post) {
+                post.update(updatedPost).then(function (update) {
+                    res.status(201)
+                        .set('url', '/posts/' + update.id)
+                        .set('Refresh', '0')
+                        .send();
                 });
             });
         })
