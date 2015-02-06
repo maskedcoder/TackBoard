@@ -1,5 +1,6 @@
 var models  = require('../models');
 var express = require('express');
+var crypto = require('crypto');
 var router = express.Router();
 
 var respondTo = function (request, response, formats) {
@@ -35,9 +36,15 @@ router.route('/')
             res.status(400).send("Invalid - missing name and/or password");
             return false;
         }
+
+        // Generates a unique id by hashing the time
+        var sha512 = crypto.createHash('sha512');
+        sha512.update(''+ +new Date());
+
         models.User.create({
             name: newUser.name,
-            password: newUser.password
+            password: newUser.password,
+            uid: sha512.digest('hex')
         }).then(function (user) {
             respondTo(req, res, {
                 'html': function () {
