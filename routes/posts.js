@@ -127,10 +127,14 @@ router.route('/:post_id/edit')
         })
         // PATCH the page with the form in a snippet
         .patch(function (req, res) {
-            models.User.findAll().then(function (users) {
-                res.render('posts/_form', {
-                    users: users,
-                    post: models.Post.build({})
+             models.Post.find({
+                where: { id: req.params.post_id }
+            }).then(function (post) {
+                models.User.findAll().then(function (users) {
+                    res.render('posts/_form', {
+                        users: users,
+                        post: post
+                    });
                 });
             });
         });
