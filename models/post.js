@@ -1,8 +1,20 @@
 "use strict";
 module.exports = function (sequelize, DataTypes) {
     var Post = sequelize.define("Post", {
-        title: DataTypes.STRING,
-        description: DataTypes.STRING
+        title: {
+            type: DataTypes.STRING,
+            validate: {
+                notNull: true,
+                notEmpty: true
+            }
+        },
+        description: {
+            type: DataTypes.STRING,
+            validate: {
+                notNull: true,
+                notEmpty: true
+            }
+        }
     }, {
         classMethods: {
             associate: function (models) {
