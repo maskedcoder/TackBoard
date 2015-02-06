@@ -4,10 +4,9 @@ var router = express.Router();
 
 var respondTo = function (request, response, formats) {
     var format = request.accepts(Object.keys(formats));
-    if (format === undefined)
-        response.status(406).send("Not Acceptable");
-    else
-        formats[format]();
+    if (format)
+        return formats[format]();
+    response.status(406).send("Not Acceptable");
 };
 
 router.route('/')
