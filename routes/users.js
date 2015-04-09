@@ -10,6 +10,56 @@ var respondTo = function (request, response, formats) {
     response.status(406).send("Not Acceptable");
 };
 
+router.route('/login/')
+    // GET the login page
+    .get(function (req, res) {
+        res.render('users/login', {
+            title: 'Login | TackBoard',
+            user: req.user
+        });
+    })
+    // POST the login info
+    .post(function (req, res) {
+        var login = req.body;
+        models.User.find({
+            where: { name: login.name }
+        }).then(function (user) {
+            if (user.password === login.password) {
+                res.cookie('user', user.uid, { httpOnly: true })
+                    .status(200)
+                    .set('url', '/')
+                    .set('Refresh', '0')
+                    .send("Successful login");
+            } else {
+                res.sendStatus(401);
+            }
+        });
+    })
+    // PUT the new user
+    .put(function (req, res) {
+        var newUser = req.body;
+
+        // Generates a unique id by hashing the time
+        var sha512 = crypto.createHash('sha512');
+        sha512.update(''+ +new Date());
+
+        models.User.create({
+            name: newUser.name,
+            password: newUser.password,
+            uid: sha512.digest('hex')
+        }).then(function (user) {
+            res.cookie('user', user.uid, { httpOnly: true })
+                .status(200)
+                .set('url', '/')
+                .set('Refresh', '0')
+                .send("Successful login");
+        });
+    })
+    // PATCH the web page with a login form
+    .patch(function (req, res) {
+        res.render('users/_login_form', {});
+    })
+
 router.route('/')
     // GET index action
     .get(function (req, res) {
@@ -54,6 +104,9 @@ router.route('/')
                     res.status(201).json(user);
                 }
             });
+        }, function (error) {
+            console.log(error);
+            res.status(400).send("Invalid name and/or password");
         });
     });
 

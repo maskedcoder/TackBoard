@@ -1,0 +1,30 @@
+<%- include('../layouts/_header'); %>
+    <h1><%= title %></h1>
+    <% if (user) { %>
+        <p>Hello, <%= user.name %></p>
+    <% } %>
+    <form id="login-form" action="" method="POST">
+        <%- include('_login_form'); %>
+    </form>
+<p>(Try 'Somebody' and 'password')</p>
+    <script type="text/javascript" src="/javascripts/jquery-validate.min.js"></script>
+    <script type="text/javascript" src="/javascripts/sha512.min.js"></script>
+    <script type="text/javascript">
+        jQuery(function ($) {
+            $('#login-form').validate({
+                submitHandler: function (form) {
+                    var data = $(form).serialize().replace(/password=([^&]*)/, function (_, password) {
+                        var shaObj = new jsSHA(password, 'TEXT');
+                        return 'password=' + shaObj.getHash('SHA-512', 'HEX');
+                    });
+                    $.ajax({
+                        method: 'POST',
+                        url: form.action,
+                        data: data,
+                        async: false
+                    });
+                }
+            });
+        });
+    </script>
+<%- include('../layouts/_footer'); %>
