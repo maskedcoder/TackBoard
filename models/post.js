@@ -4,15 +4,23 @@ module.exports = function (sequelize, DataTypes) {
         title: {
             type: DataTypes.STRING,
             validate: {
-                notNull: true,
-                notEmpty: true
+                notNull: {
+                    msg: "Title missing"
+                },
+                notEmpty: {
+                    msg: "Title missing"
+                }
             }
         },
         description: {
             type: DataTypes.STRING,
             validate: {
-                notNull: true,
-                notEmpty: true
+                notNull: {
+                    msg: "Description missing"
+                },
+                notEmpty: {
+                    msg: "Description missing"
+                }
             }
         }
     }, {
