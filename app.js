@@ -9,6 +9,8 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 var posts = require('./routes/posts');
 
+var models  = require('./models');
+
 var app = express();
 
 // view engine setup
@@ -23,6 +25,20 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// fetches the user if logged in
+app.use(function (req, res, next) {
+    if (req.cookies["user"]) {
+        models.User.find({
+            where: { uid: req.cookies.user }
+        }).then(function (user) {
+            req.user = user;
+            next();
+        });
+    } else {
+        req.user = false;
+        next();
+    }
+});
 app.use('/', routes);
 app.use('/users', users);
 app.use('/posts', posts);
