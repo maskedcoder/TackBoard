@@ -1,0 +1,10 @@
+<%- include('../layouts/_header'); %>
+    <h1><%= title %></h1>
+    <p>You must be logged in.</p>
+    <p>If you are not automatically directed to the login page, <a href="/users/login/">click here</a>.</p>
+    <script>
+        window.setTimeout(function () {
+            window.location.assign("/users/login/");
+        }, 2000);
+    </script>
+<%- include('../layouts/_footer'); %>

@@ -10,6 +10,17 @@ var respondTo = function (request, response, formats) {
     response.status(406).send("Not Acceptable");
 };
 
+var restrictAccess = function (request, response, next) {
+    if (request.account) {
+        next();
+    } else {
+        response.status(401).render('users/deny', {
+                account: "hide",
+                title: 'Access denied'
+        });
+    }
+};
+
 router.route('/login/')
     // GET the login page
     .get(function (req, res) {
@@ -91,7 +102,7 @@ router.route('/')
         });
     })
     // POST new user action
-    .post(function (req, res) {
+    .post(restrictAccess, function (req, res) {
         var newUser = req.body;
         if (!newUser.name || !newUser.password) {
             res.status(400).send("Invalid - missing name and/or password");
@@ -122,7 +133,7 @@ router.route('/')
     });
 
 // GET form to create a user
-router.get('/new', function (req, res) {
+router.get('/new', restrictAccess, function (req, res) {
     res.render('users/new', {
         account: req.account,
         title: 'Creating new user',
@@ -131,7 +142,7 @@ router.get('/new', function (req, res) {
 });
 
 /* GET a form to edit the user */
-router.get('/:user_id/edit', function (req, res) {
+router.get('/:user_id/edit', restrictAccess, function (req, res) {
     models.User.find({
         where: { id: req.params.user_id }
     }).then(function (user) {
@@ -164,7 +175,7 @@ router.route('/:user_id/')
         });
     })
     // DELETE the user
-    .delete(function (req, res) {
+    .delete(restrictAccess, function (req, res) {
         models.User.find({
             where: { id: req.params.user_id }
         }).then(function (user) {
@@ -174,7 +185,7 @@ router.route('/:user_id/')
         });
     })
     // PUT an update on the user
-    .put(function (req, res) {
+    .put(restrictAccess, function (req, res) {
         var updatedUser = req.body;
         if (!updatedUser.name || !updatedUser.password) {
             res.status(400).send("Invalid - missing name and/or password");
