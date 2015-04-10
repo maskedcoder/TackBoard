@@ -2,6 +2,7 @@
     <h1><%= title %></h1>
     <% if (user) { %>
         <p>Hello, <%= user.name %></p>
+        <p>Not you? <a href="/users/logout/">Log Out</a></p>
     <% } %>
     <form id="login-form" action="" method="POST">
         <%- include('_login_form'); %>
@@ -22,6 +23,10 @@
                         url: form.action,
                         data: data,
                         async: false
+                    }).success(function () {
+                        window.location.href = "/users/";
+                    }).error(function () {
+                        alert("Invalid entry. Please re-enter the data.");
                     });
                 }
             });

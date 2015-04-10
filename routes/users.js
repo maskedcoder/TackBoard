@@ -50,7 +50,7 @@ router.route('/login/')
         }).then(function (user) {
             res.cookie('user', user.uid, { httpOnly: true })
                 .status(200)
-                .set('url', '/')
+                .set('url', '/') // This way of redirecting causes the browser to infinitely cycle reload and non-reload: no redirection
                 .set('Refresh', '0')
                 .send("Successful login");
         });
@@ -58,7 +58,17 @@ router.route('/login/')
     // PATCH the web page with a login form
     .patch(function (req, res) {
         res.render('users/_login_form', {});
-    })
+    });
+
+router.route('/logout/')
+    // GET logout action
+    .get(function (req, res) {
+        res.clearCookie('user', { httpOnly: true })
+            .render('users/logout', {
+                title: 'Logout | TackBoard',
+                user: req.user
+        });
+    });
 
 router.route('/')
     // GET index action
