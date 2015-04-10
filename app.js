@@ -25,17 +25,20 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// fetches the user if logged in
+// fetches the user's account if logged in
+//  store in req.account to differentiate
+//  it from the variable 'user' used to
+//  create or edit users.
 app.use(function (req, res, next) {
     if (req.cookies["user"]) {
         models.User.find({
             where: { uid: req.cookies.user }
         }).then(function (user) {
-            req.user = user;
+            req.account = user;
             next();
         });
     } else {
-        req.user = false;
+        req.account = false;
         next();
     }
 });

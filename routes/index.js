@@ -3,15 +3,16 @@ var express = require('express');
 var router = express.Router();
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/', function (req, res, next) {
     models.User.findAll({
         include: models.Post
-    }).then(function(users) {
-    res.render('home/index', {
-      title: 'Express',
-      users: users
+    }).then(function (users) {
+        res.render('home/index', {
+            account: req.account,
+            title: 'Express',
+            users: users
+        });
     });
-  });
 });
 
 module.exports = router;

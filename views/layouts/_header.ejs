@@ -6,3 +6,20 @@
         <script type="text/javascript" src="/javascripts/jquery.min.js"></script>
     </head>
     <body>
+        <header>
+            <h1>TackBoard</h1>
+
+            <%# This code displays information concerning logging in.
+                Account contains the user (if logged in), false (not logged in),
+                or "hide" to indicate that the information should not be
+                displayed (used by login/logout pages to avoid confusion).%>
+            <% if (account !== "hide") { %>
+                <% if (account) { %>
+                    <p>Hello, <%= account.name %></p>
+                    <p>Not you? <a href="/users/logout/">Log Out</a></p>
+                <% } else { %>
+                    <p>You must be logged in to make changes.</p>
+                    <p>Would you like to <a href="/users/login/">Log In</a>?</p>
+                <% } %>
+            <% } %>
+        </header>

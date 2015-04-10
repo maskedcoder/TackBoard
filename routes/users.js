@@ -14,8 +14,8 @@ router.route('/login/')
     // GET the login page
     .get(function (req, res) {
         res.render('users/login', {
-            title: 'Login | TackBoard',
-            user: req.user
+            account: "hide",
+            title: 'Login | TackBoard'
         });
     })
     // POST the login info
@@ -65,8 +65,8 @@ router.route('/logout/')
     .get(function (req, res) {
         res.clearCookie('user', { httpOnly: true })
             .render('users/logout', {
-                title: 'Logout | TackBoard',
-                user: req.user
+                account: "hide",
+                title: 'Logout | TackBoard'
         });
     });
 
@@ -79,6 +79,7 @@ router.route('/')
             respondTo(req, res, {
                 'html': function () {
                     res.render('users/index', {
+                        account: req.account,
                         title: 'All users | TackBoard',
                         users: users
                     });
@@ -123,6 +124,7 @@ router.route('/')
 // GET form to create a user
 router.get('/new', function (req, res) {
     res.render('users/new', {
+        account: req.account,
         title: 'Creating new user | TackBoard',
         user: models.User.build({})
     });
@@ -134,6 +136,7 @@ router.get('/:user_id/edit', function (req, res) {
         where: { id: req.params.user_id }
     }).then(function (user) {
         res.render('users/edit', {
+          account: req.account,
           title: 'Editing '+user.name+' | TackBoard',
           user: user
         });
@@ -149,6 +152,7 @@ router.route('/:user_id/')
             respondTo(req, res, {
                 'html': function () {
                     res.render('users/show', {
+                        account: req.account,
                         title: user.name + ' | TackBoard',
                         user: user
                     });
