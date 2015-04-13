@@ -27,7 +27,7 @@ var nonRedundantAccess = function (request, response, next) {
     if (request.account) {
         respondTo(request, response, {
             'html': function () {
-                response.redirect(409, '/');
+                response.redirect(302, '/users/dashboard');
             },
             'json': function () {
                 response.status(409).send("Error: User already logged in.");
@@ -114,12 +114,16 @@ router.route('/logout/')
 
 router.route('/dashboard/')
     // GET logged in user's dashboard
-    .get(restrictAccess, function (req, res) {
-        res.render('users/dashboard', {
-            account: "hide",
-            title: 'My Account Dashboard',
-            user: req.account
-        });
+    .get(function (req, res) {
+        if (req.account) {
+            res.render('users/dashboard', {
+                account: "hide",
+                title: 'My Account Dashboard',
+                user: req.account
+            });
+        } else {
+            res.redirect(302, '/users/login');
+        }
     });
 
 router.route('/')
