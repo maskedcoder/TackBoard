@@ -223,7 +223,8 @@ router.route('/:user_id/')
             where: { id: req.params.user_id }
         }).then(function (user) {
             user.destroy().then(function () {
-                res.sendStatus(204);
+                res.clearCookie('user', { httpOnly: true })
+                    .sendStatus(204);
             });
         });
     })
