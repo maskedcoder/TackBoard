@@ -179,15 +179,6 @@ router.route('/')
         });
     });
 
-// GET form to create a user
-router.get('/new', restrictAccess, function (req, res) {
-    res.render('users/new', {
-        account: req.account,
-        title: 'Creating new user',
-        user: models.User.build({})
-    });
-});
-
 /* GET a form to edit the user */
 router.get('/:user_id/edit', restrictAccess, function (req, res) {
     models.User.find({
