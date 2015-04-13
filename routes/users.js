@@ -130,7 +130,8 @@ router.route('/')
     // GET index action
     .get(function (req, res) {
         models.User.findAll({
-            include: models.Post
+            include: models.Post,
+            attributes: ['name', 'id']
         }).then(function (users) {
             respondTo(req, res, {
                 'html': function () {
@@ -208,7 +209,8 @@ router.route('/:user_id/')
             return;
         }
         models.User.find({
-            where: { id: req.params.user_id }
+            where: { id: req.params.user_id },
+            attributes: ['id', 'name']
         }).then(function (user) {
             respondTo(req, res, {
                 'html': function () {
