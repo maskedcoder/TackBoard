@@ -203,7 +203,7 @@ router.get('/:user_id/edit', restrictAccess, function (req, res) {
 router.route('/:user_id/')
     // GET the user
     .get(function (req, res, next) {
-        if (req.params.user_id == req.account.id) {
+        if (req.params.user_id == req.account.id && req.accepts(['html', 'json']) == 'html') {
             res.redirect(303, '/users/dashboard');
             return;
         }
