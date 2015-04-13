@@ -15,7 +15,7 @@
                 displayed (used by login/logout pages to avoid confusion).%>
             <% if (account !== "hide") { %>
                 <% if (account) { %>
-                    <p>Hello, <%= account.name %></p>
+                    <p>Hello, <a href="/users/dashboard"><%= account.name %></a></p>
                     <p>Not you? <a href="/users/logout/">Log Out</a></p>
                 <% } else { %>
                     <p>You must be logged in to make changes.</p>

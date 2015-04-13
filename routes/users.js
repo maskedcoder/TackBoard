@@ -112,6 +112,16 @@ router.route('/logout/')
         });
     });
 
+router.route('/dashboard/')
+    // GET logged in user's dashboard
+    .get(restrictAccess, function (req, res) {
+        res.render('users/dashboard', {
+            account: "hide",
+            title: 'My Account Dashboard',
+            user: req.account
+        });
+    });
+
 router.route('/')
     // GET index action
     .get(function (req, res) {
@@ -189,6 +199,10 @@ router.get('/:user_id/edit', restrictAccess, function (req, res) {
 router.route('/:user_id/')
     // GET the user
     .get(function (req, res, next) {
+        if (req.params.user_id == req.account.id) {
+            res.redirect(303, '/users/dashboard');
+            return;
+        }
         models.User.find({
             where: { id: req.params.user_id }
         }).then(function (user) {
