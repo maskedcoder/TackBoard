@@ -10,8 +10,9 @@ var respondTo = function (request, response, formats) {
     response.status(406).send("Not Acceptable");
 };
 
+// restrictAccess middleware keeps users from being edited by others
 var restrictAccess = function (request, response, next) {
-    if (request.account) {
+    if (request.account && request.account.id == request.params.user_id) {
         next();
     } else {
         response.status(401).render('users/deny', {
@@ -21,16 +22,32 @@ var restrictAccess = function (request, response, next) {
     }
 };
 
+// nonRedundantAccess middleware keeps users from logging in multiple times
+var nonRedundantAccess = function (request, response, next) {
+    if (request.account) {
+        respondTo(request, response, {
+            'html': function () {
+                response.redirect(409, '/');
+            },
+            'json': function () {
+                response.status(409).send("Error: User already logged in.");
+            }
+        });
+    } else {
+        next();
+    }
+};
+
 router.route('/login/')
     // GET the login page
-    .get(function (req, res) {
+    .get(nonRedundantAccess, function (req, res) {
         res.render('users/login', {
             account: "hide",
             title: 'Login'
         });
     })
     // POST the login info
-    .post(function (req, res) {
+    .post(nonRedundantAccess, function (req, res) {
         var login = req.body;
         models.User.find({
             where: { name: login.name }
@@ -67,8 +84,22 @@ router.route('/login/')
         });
     })
     // PATCH the web page with a login form
-    .patch(function (req, res) {
+    .patch(nonRedundantAccess, function (req, res) {
         res.render('users/_login_form', {});
+    });
+
+router.route('/signup/')
+    // GET the signup page
+    .get(nonRedundantAccess, function (req, res) {
+        res.render('users/new', {
+            account: 'hide',
+            title: 'Sign Up',
+            user: models.User.build({})
+        });
+    })
+    // PATCH the web page with a signup form
+    .patch(nonRedundantAccess, function (req, res) {
+        res.render('users/_form', {});
     });
 
 router.route('/logout/')
@@ -102,7 +133,7 @@ router.route('/')
         });
     })
     // POST new user action
-    .post(restrictAccess, function (req, res) {
+    .post(nonRedundantAccess, function (req, res) {
         var newUser = req.body;
         if (!newUser.name || !newUser.password) {
             res.status(400).send("Invalid - missing name and/or password");
@@ -118,6 +149,7 @@ router.route('/')
             password: newUser.password,
             uid: sha512.digest('hex')
         }).then(function (user) {
+            res.cookie('user', user.uid, { httpOnly: true });
             respondTo(req, res, {
                 'html': function () {
                     res.redirect(201, '/users/' + user.id);
