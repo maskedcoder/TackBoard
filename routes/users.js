@@ -10,6 +10,66 @@ var respondTo = function (request, response, formats) {
     response.status(406).send("Not Acceptable");
 };
 
+// getNonce helper function creates a nonce
+// action -> string of format 'model/action'
+//           for example, 'persons/create'
+//           `model` is where the model's
+//           router is mounted
+//           Note that the action is the action
+//           that a form is submitted _to_
+//           as oppposed to the form's location
+var getNonce = function (action) {
+    action = action || '';
+    var sha512 = crypto.createHash('sha512');
+    return sha512.update(action+ +new Date()).digest('hex');
+};
+
+// setupNonce helper function creates and saves a nonce
+// action -> string of format 'model/action'
+//           for example, 'users/login'
+//           `model` is where the model's
+//           router is mounted
+//           that a form is submitted _to_
+//           as oppposed to the form's location
+var setupNonce = function (request, action) {
+    var nonceStore = request.session.nonce;
+
+    if (!nonceStore)
+        nonceStore = request.session.nonce = {};
+
+    var nonce = getNonce(action);
+    nonceStore[action] = nonce;
+
+    return nonce;
+};
+
+// validateNonce middleware validates a nonce
+var validateNonce = function (request, response, next) {
+    var action = request.baseUrl.split('/')[1] + '/' + request.route.path.split('/')[1];
+    var nonce = request.body.nonce;
+
+    var nonceStore = request.session.nonce;
+    
+    if (!nonceStore) {
+        // the user doesn't even have a session
+        // definitely something is wrong
+        return false;
+    }
+
+    var expectedNonce = nonceStore[action];
+
+    if (expectedNonce && expectedNonce === nonce) {
+        console.log("\nNONCE IS VALIDATED\n");
+        
+        // remove the nonce
+        delete nonceStore[action];
+        next();
+    } else {
+        console.log("\nINVALID NONCE\n");
+        response.sendStatus(401);
+    }
+};
+
 // restrictAccess middleware keeps users from being edited by others
 var restrictAccess = function (request, response, next) {
     if (request.account && request.account.id == request.params.user_id) {
@@ -41,13 +101,15 @@ var nonRedundantAccess = function (request, response, next) {
 router.route('/login/')
     // GET the login page
     .get(nonRedundantAccess, function (req, res) {
+        var nonce = setupNonce(req, 'users/login');
         res.render('users/login', {
             account: "hide",
-            title: 'Login'
+            title: 'Login',
+            nonce: nonce
         });
     })
     // POST the login info
-    .post(nonRedundantAccess, function (req, res) {
+    .post(nonRedundantAccess, validateNonce, function (req, res) {
         var login = req.body;
         models.User.find({
             where: { name: login.name }
@@ -85,21 +147,23 @@ router.route('/login/')
     })
     // PATCH the web page with a login form
     .patch(nonRedundantAccess, function (req, res) {
-        res.render('users/_login_form', {});
+        res.render('users/_login_form', {nonce: setupNonce(req, 'users/login')});
     });
 
 router.route('/signup/')
     // GET the signup page
     .get(nonRedundantAccess, function (req, res) {
+        var nonce = setupNonce(req, 'users/');
         res.render('users/new', {
             account: 'hide',
             title: 'Sign Up',
-            user: models.User.build({})
+            user: models.User.build({}),
+            nonce: nonce
         });
     })
     // PATCH the web page with a signup form
     .patch(nonRedundantAccess, function (req, res) {
-        res.render('users/_form', {});
+        res.render('users/_form', {nonce: setupNonce(req, 'users/')});
     });
 
 router.route('/logout/')
@@ -116,10 +180,12 @@ router.route('/dashboard/')
     // GET logged in user's dashboard
     .get(function (req, res) {
         if (req.account) {
+            var nonce = setupNonce(req, 'users/:user_id');
             res.render('users/dashboard', {
                 account: "hide",
                 title: 'My Account Dashboard',
-                user: req.account
+                user: req.account,
+                nonce: nonce
             });
         } else {
             res.redirect(302, '/users/login');
@@ -148,7 +214,7 @@ router.route('/')
         });
     })
     // POST new user action
-    .post(nonRedundantAccess, function (req, res) {
+    .post(nonRedundantAccess, validateNonce, function (req, res) {
         var newUser = req.body;
         if (!newUser.name || !newUser.password) {
             res.status(400).send("Invalid - missing name and/or password");
@@ -181,13 +247,15 @@ router.route('/')
 
 /* GET a form to edit the user */
 router.get('/:user_id/edit', restrictAccess, function (req, res) {
+    var nonce = setupNonce(req, 'users/:user_id');
     models.User.find({
         where: { id: req.params.user_id }
     }).then(function (user) {
         res.render('users/edit', {
           account: req.account,
           title: 'Editing '+user.name,
-          user: user
+          user: user,
+          nonce: nonce
         });
     });
 });
@@ -218,7 +286,7 @@ router.route('/:user_id/')
         });
     })
     // DELETE the user
-    .delete(restrictAccess, function (req, res) {
+    .delete(restrictAccess, validateNonce, function (req, res) {
         models.User.find({
             where: { id: req.params.user_id }
         }).then(function (user) {
@@ -229,7 +297,7 @@ router.route('/:user_id/')
         });
     })
     // PUT an update on the user
-    .put(restrictAccess, function (req, res) {
+    .put(restrictAccess, validateNonce, function (req, res) {
         var updatedUser = req.body;
         if (!updatedUser.name || !updatedUser.password) {
             res.status(400).send("Invalid - missing name and/or password");

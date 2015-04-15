@@ -4,6 +4,7 @@
     <p><b>Name:</b> <%= user.name %></p>
     <a href="<%= user.id %>/edit">Edit</a>
     <a href="#destroy">Delete my account</a>
+    <input type="hidden" name="nonce" value="<%= nonce %>" />
 <script type="text/javascript">
     jQuery(function ($) {
         $('a[href="#destroy"]').on('click', function (e) {
@@ -12,8 +13,9 @@
                         "This action cannot be undone.")) {
                 $.ajax({
                     method: 'DELETE',
-                    url: '',
-                    dataType: 'json'
+                    url: '<%= user.id %>',
+                    dataType: 'json',
+                    data: {nonce: $('input[name="nonce"]').val()}
                 }).success(function () {
                     window.location.href = "/users";
                 }).error(function () {
