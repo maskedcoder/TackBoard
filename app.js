@@ -30,7 +30,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // session middleware, for nonces
 app.use(session({
     store: new FileStore(),
-    secret: 'nasturtiums pondering monkeys'
+    secret: 'nasturtiums pondering monkeys',
+    resave: true,
+    saveUninitialized: true
 }));
 
 // fetches the user's account if logged in
