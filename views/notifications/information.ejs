@@ -1,10 +1,13 @@
 <%- include('../layouts/_header'); %>
     <h1><%= title %></h1>
     <p><%= text %></p>
-    <p>If you are not automatically directed to the main page, <a href="/">click here</a>.</p>
+
+    <% if (!this['link']) var link = '/'; %>
+
+    <p>If you are not automatically redirected, <a href="<%= link %>">click here</a>.</p>
     <script>
         window.setTimeout(function () {
-            window.location.assign("/");
+            window.location.assign("<%= link %>");
         }, 2000);
     </script>
 <%- include('../layouts/_footer'); %>

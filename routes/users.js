@@ -259,7 +259,22 @@ var UsersController = {
      createUser: function (req, res) {
         var newUser = req.body;
         if (!newUser.name || !newUser.password) {
-            res.status(400).send("Invalid - missing name and/or password");
+            res.status(400);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('notifications/error', {
+                        account: 'hide',
+                        title: 'Error creating user',
+                        text: 'Invalid - missing name and/or password'
+                    });
+                },
+                'json': function () {
+                    response.json({
+                        'type': 'error',
+                        'text': 'Invalid - missing name and/or password'
+                    });
+                }
+            });
             return false;
         }
 
@@ -282,10 +297,17 @@ var UsersController = {
             password: password,
             uid: sha512.digest('hex')
         }).then(function (user) {
-            res.cookie('user', user.uid, { httpOnly: true });
+            res.cookie('user', user.uid, { httpOnly: true })
+                .status(201)
+                .set('Location', '/users/' + user.id);
             utils.respondTo(req, res, {
                 'html': function () {
-                    res.redirect(201, '/users/' + user.id);
+                    res.render('notifications/information', {
+                        account: 'hide',
+                        title: 'User created',
+                        text: 'The user was successfully created.',
+                        link: '/users/' + user.id
+                    });
                 },
                 'json': function () {
                     // Can't just send json(user), because it exposes sensitive information
@@ -333,17 +355,25 @@ var UsersController = {
                 name: updatedUser.name,
                 password: password
             }).then(function (update) {
-            utils.respondTo(req, res, {
-                'html': function () {
-                    res.redirect(201, '/users/' + update.id);
-                },
-                'json': function () {
-                    // Can't just send json(update), because it exposes sensitive information
-                    res.status(201).json({
-                        name: update.name,
-                        id: update.id
-                    });
-                }
+                res.status(201)
+                   .set('Location', '/users/' + update.id);
+                utils.respondTo(req, res, {
+                    'html': function () {
+                        res.render('notifications/information', {
+                            account: 'hide',
+                            title: 'User updated',
+                            text: 'The user was successfully updated.',
+                            link: '/users/' + update.id
+                        });
+                    },
+                    'json': function () {
+                        // Can't just send json(update), because it exposes sensitive information
+                        res.status(201).json({
+                            name: update.name,
+                            id: update.id
+                        });
+                    }
+                });
             });
         });
     },
@@ -362,7 +392,22 @@ var UsersController = {
         }).then(function (user) {
             user.destroy().then(function () {
                 res.clearCookie('user', { httpOnly: true }) // Log out
-                    .sendStatus(204); // Empty response
+                    .status(200);
+                utils.respondTo(req, res, {
+                    'html': function () {
+                        res.render('notifications/information', {
+                            account: 'hide',
+                            title: 'User deleted',
+                            text: 'The user was successfully deleted.'
+                        });
+                    },
+                    'json': function () {
+                        res.json({
+                            type: 'info',
+                            text: 'The user was successfully deleted.'
+                        });
+                    }
+                });
             });
         });
     },
