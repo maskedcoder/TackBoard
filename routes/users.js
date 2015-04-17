@@ -33,103 +33,50 @@ var nonRedundantAccess = function (request, response, next) {
     }
 };
 
-router.route('/login/')
-    // GET the login page
-    .get(nonRedundantAccess, function (req, res) {
-        var nonce = utils.setupNonce(req, 'users/login');
-        res.render('users/login', {
-            account: "hide",
-            title: 'Login',
-            nonce: nonce
-        });
-    })
-    // POST the login info
-    .post(nonRedundantAccess, utils.validateNonce, function (req, res) {
-        var login = req.body;
-        models.User.find({
-            where: { name: login.name }
-        }).then(function (user) {
-            if (user.password === login.password) {
-                res.cookie('user', user.uid, { httpOnly: true })
-                    .status(200)
-                    .set('url', '/')
-                    .set('Refresh', '0')
-                    .send("Successful login");
-            } else {
-                res.sendStatus(401);
-            }
-        });
-    })
-    // PUT the new user
-    .put(function (req, res) {
-        var newUser = req.body;
+/**
+ * Users API
+ *
+ * The Users route deals with User objects. Actions include logging in, logging out, signing up (creating a new account), editing accounts, deleting accounts, and updating accounts.
+ *
+ * The API is as follows:
+ *
+ * GET /users/                   View a listing of all users
+ * GET /users/user_id            View a user's account. If the account is the logged in user, redirect to /users/dashboard.
+ * GET /users/dashboard/         View the logged in user's account. Links to /users/user_id/edit and /uses/user_id/destroy to change or delete the account.
+ * GET /users/user_id/edit/      View a form to edit the user. If the user_id does not match the logged in user's id, or if the browser is not logged in, redirect to an Unauthorized page.
+ * GET /users/user_id/delete/    View a form to delete the user (basically a confirmation page). If the user_id does not match the logged in user's id, or if the browser is not logged in, redirect to an Unauthorized page.
+ * GET /users/login/             View a login form. If the user is already logged in, redirect to dashboard.
+ * GET /users/signup/            View a signup form. If the user is already logged in, redirect to dashboard.
+ * GET /users/logout/            View a logout form (essentially a confirmation page)
+ *
+ * POST /users/                  Create a new user, and logs in as that user. This is the AJAX target of the /users/signup/ form.
+ * PUT /users/user_id            Make a change to a user's account. This is the target of /users/user_id/edit/. If the user_id does not match the logged in user's id, or if the browser is not logged in, stop and send an error.
+ * DELETE /users/user_id         Delete a user's account and logs out. This is the target of the /users/user_id/delete/ form. If the user_id does not match the logged in user's id, or if the browser is not logged in, stop and send an error.
+ * POST /users/login/            Log the user in. This is the target of the /users/login/ form. Redirect to a main page.
+ * POST /users/logout/           Log the user out. This is the target of the /users/logout/ form. The page will inform the user that they are logged out and then redirect to the main page.
+ *
+ * Because PUT and DELETE verbs cannot be done without javascript, two more routes are provided:
+ *
+ * POST /users/user_id/delete/    Synonym for DELETE /users/user_id
+ * POST /users/user_id/edit/    Synonym for PUT /users/user_id
+ */
 
-        // Generates a unique id by hashing the time
-        var sha512 = crypto.createHash('sha512');
-        sha512.update(''+ +new Date());
+/**
+ * Users Controller
+ *
+ * This object provides the actions for the routes.
+ */
+var UsersController = {
 
-        models.User.create({
-            name: newUser.name,
-            password: newUser.password,
-            uid: sha512.digest('hex')
-        }).then(function (user) {
-            res.cookie('user', user.uid, { httpOnly: true })
-                .status(200)
-                .set('url', '/') // This way of redirecting causes the browser to infinitely cycle reload and non-reload: no redirection
-                .set('Refresh', '0')
-                .send("Successful login");
-        });
-    })
-    // PATCH the web page with a login form
-    .patch(nonRedundantAccess, function (req, res) {
-        res.render('users/_login_form', {nonce: utils.setupNonce(req, 'users/login')});
-    });
-
-router.route('/signup/')
-    // GET the signup page
-    .get(nonRedundantAccess, function (req, res) {
-        var nonce = utils.setupNonce(req, 'users/');
-        res.render('users/new', {
-            account: 'hide',
-            title: 'Sign Up',
-            user: models.User.build({}),
-            nonce: nonce
-        });
-    })
-    // PATCH the web page with a signup form
-    .patch(nonRedundantAccess, function (req, res) {
-        res.render('users/_form', {nonce: utils.setupNonce(req, 'users/')});
-    });
-
-router.route('/logout/')
-    // GET logout action
-    .get(function (req, res) {
-        res.clearCookie('user', { httpOnly: true })
-            .render('users/logout', {
-                account: "hide",
-                title: 'Logout'
-        });
-    });
-
-router.route('/dashboard/')
-    // GET logged in user's dashboard
-    .get(function (req, res) {
-        if (req.account) {
-            var nonce = utils.setupNonce(req, 'users/:user_id');
-            res.render('users/dashboard', {
-                account: "hide",
-                title: 'My Account Dashboard',
-                user: req.account,
-                nonce: nonce
-            });
-        } else {
-            res.redirect(302, '/users/login');
-        }
-    });
-
-router.route('/')
-    // GET index action
-    .get(function (req, res) {
+    /**
+     * Index action
+     *
+     * Fetches a listing of all users. Corresponds to GET /users/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+    index: function (req, res) {
         models.User.findAll({
             include: models.Post,
             attributes: ['name', 'id']
@@ -147,9 +94,168 @@ router.route('/')
                 }
             });
         });
-    })
-    // POST new user action
-    .post(nonRedundantAccess, utils.validateNonce, function (req, res) {
+    },
+
+    /**
+     * Show action
+     *
+     * Show an individual user's account. Corresponds to GET /users/user_id
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     showUser: function (req, res) {
+        if (req.params.user_id == req.account.id && req.accepts(['html', 'json']) == 'html') {
+            res.redirect(303, '/users/dashboard');
+            return;
+        }
+        models.User.find({
+            where: { id: req.params.user_id },
+            attributes: ['id', 'name']
+        }).then(function (user) {
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('users/show', {
+                        account: req.account,
+                        title: user.name,
+                        user: user
+                    });
+                },
+                'json': function () {
+                    res.json(user);
+                }
+            });
+        });
+    },
+
+    /**
+     * Dashboard action
+     *
+     * Show the logged in user's dashboard. Corresponds to GET /users/dashboard
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     dashboard: function (req, res) {
+        if (req.account) {
+            var nonce = utils.setupNonce(req, 'users/:user_id');
+            res.render('users/dashboard', {
+                account: "hide",
+                title: 'My Account Dashboard',
+                user: req.account,
+                nonce: nonce
+            });
+        } else {
+            res.redirect(302, '/users/login');
+        }
+    },
+
+    /**
+     * Edit Form action
+     *
+     * Show a form to edit a user. Corresponds to GET /users/user_id/edit/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     editForm: function (req, res) {
+        var nonce = utils.setupNonce(req, 'users/:user_id');
+        models.User.find({
+            where: { id: req.params.user_id }
+        }).then(function (user) {
+            res.render('users/edit', {
+              account: req.account,
+              title: 'Editing '+user.name,
+              user: user,
+              nonce: nonce
+            });
+        });
+    },
+
+    /**
+     * Delete Form action
+     *
+     * Show a form to delete a user. Corresponds to GET /users/user_id/delete/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     deleteForm: function (req, res) {
+        var nonce = utils.setupNonce(req, 'users/:user_id');
+        models.User.find({
+            where: { id: req.params.user_id }
+        }).then(function (user) {
+            res.render('users/delete', {
+              account: req.account,
+              title: 'Confirm Delete',
+              user: user,
+              nonce: nonce
+            });
+        });
+    },
+
+    /**
+     * Login Form action
+     *
+     * Show a form to login. Corresponds to GET /users/login/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     loginForm: function (req, res) {
+        var nonce = utils.setupNonce(req, 'users/login');
+        res.render('users/login', {
+            account: "hide",
+            title: 'Login',
+            nonce: nonce
+        });
+    },
+
+    /**
+     * Signup Form action
+     *
+     * Show a form to sign up (create a new user). Corresponds to GET /users/signup/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     signupForm: function (req, res) {
+        var nonce = utils.setupNonce(req, 'users/');
+        res.render('users/new', {
+            account: 'hide',
+            title: 'Sign Up',
+            user: models.User.build({}),
+            nonce: nonce
+        });
+    },
+
+    /**
+     * Logout Form action
+     *
+     * Show a form to log out. Corresponds to GET /users/logout/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     logoutForm: function (req, res) {
+        var nonce = utils.setupNonce(req, 'users/logout');
+        res.render('users/logout_form', {
+            account: 'hide',
+            title: 'Confirm Logout',
+            user: req.account, // Since we aren't using the account that was fetched in the header, why not use it here and skip another call to the database?
+            nonce: nonce
+        });
+    },
+
+    /**
+     * Create User action
+     *
+     * Create a new user, and logs in as that user. Corresponds to POST /users/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     createUser: function (req, res) {
         var newUser = req.body;
         if (!newUser.name || !newUser.password) {
             res.status(400).send("Invalid - missing name and/or password");
@@ -178,61 +284,17 @@ router.route('/')
             console.log(error);
             res.status(400).send("Invalid name and/or password");
         });
-    });
+    },
 
-/* GET a form to edit the user */
-router.get('/:user_id/edit', restrictAccess, function (req, res) {
-    var nonce = utils.setupNonce(req, 'users/:user_id');
-    models.User.find({
-        where: { id: req.params.user_id }
-    }).then(function (user) {
-        res.render('users/edit', {
-          account: req.account,
-          title: 'Editing '+user.name,
-          user: user,
-          nonce: nonce
-        });
-    });
-});
-
-router.route('/:user_id/')
-    // GET the user
-    .get(function (req, res, next) {
-        if (req.params.user_id == req.account.id && req.accepts(['html', 'json']) == 'html') {
-            res.redirect(303, '/users/dashboard');
-            return;
-        }
-        models.User.find({
-            where: { id: req.params.user_id },
-            attributes: ['id', 'name']
-        }).then(function (user) {
-            utils.respondTo(req, res, {
-                'html': function () {
-                    res.render('users/show', {
-                        account: req.account,
-                        title: user.name,
-                        user: user
-                    });
-                },
-                'json': function () {
-                    res.json(user);
-                }
-            });
-        });
-    })
-    // DELETE the user
-    .delete(restrictAccess, utils.validateNonce, function (req, res) {
-        models.User.find({
-            where: { id: req.params.user_id }
-        }).then(function (user) {
-            user.destroy().then(function () {
-                res.clearCookie('user', { httpOnly: true })
-                    .sendStatus(204);
-            });
-        });
-    })
-    // PUT an update on the user
-    .put(restrictAccess, utils.validateNonce, function (req, res) {
+    /**
+     * Update User action
+     *
+     * Updates a user. Corresponds to PUT /users/user_id/ and POST /users/user_id/edit
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     updateUser: function (req, res) {
         var updatedUser = req.body;
         if (!updatedUser.name || !updatedUser.password) {
             res.status(400).send("Invalid - missing name and/or password");
@@ -248,7 +310,122 @@ router.route('/:user_id/')
                 res.status(201).json(update);
             });
         });
+    },
+
+    /**
+     * Delete User action
+     *
+     * Deletes a user and logs out. Corresponds to DELETE /users/user_id/ and POST /users/user_id/delete
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     deleteUser: function (req, res) {
+        models.User.find({
+            where: { id: req.params.user_id }
+        }).then(function (user) {
+            user.destroy().then(function () {
+                res.clearCookie('user', { httpOnly: true }) // Log out
+                    .sendStatus(204); // Empty response
+            });
+        });
+    },
+
+    /**
+     * Login action
+     *
+     * Logs a user in. Corresponds to POST /users/login/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     loginUser: function (req, res) {
+        var login = req.body;
+        models.User.find({
+            where: { name: login.name }
+        }).then(function (user) {
+            if (user.password === login.password) {
+                res.cookie('user', user.uid, { httpOnly: true })
+                    .status(200)
+                    .set('url', '/')
+                    .set('Refresh', '0')
+                    .send("Successful login");
+            } else {
+                res.sendStatus(401);
+            }
+        });
+    },
+
+    /**
+     * Log Out action
+     *
+     * Logs a user out. Corresponds to POST /users/logout/
+     *
+     * @param {Object}  req    The request object
+     * @param {Object}  res    The response object
+     */
+     logoutUser: function (req, res) {
+        res.clearCookie('user', { httpOnly: true })
+            .render('users/logout', {
+                account: "hide",
+                title: 'Logout'
+        });
+    }
+};
+
+router.route('/login/')
+    // GET the login page
+    .get(nonRedundantAccess, UsersController.loginForm)
+    // POST the login info
+    .post(nonRedundantAccess, utils.validateNonce, UsersController.loginUser)
+    // PATCH the web page with a login form
+    .patch(nonRedundantAccess, function (req, res) {
+        res.render('users/_login_form', {nonce: utils.setupNonce(req, 'users/login')});
     });
+
+router.route('/signup/')
+    // GET the signup page
+    .get(nonRedundantAccess, UsersController.signupForm)
+    // PATCH the web page with a signup form
+    .patch(nonRedundantAccess, function (req, res) {
+        res.render('users/_form', {nonce: utils.setupNonce(req, 'users/')});
+    });
+
+router.route('/logout/')
+    // GET logout form action
+    .get(UsersController.logoutForm)
+    // POST logout action
+    .post(utils.validateNonce, UsersController.logoutUser);
+
+router.route('/dashboard/')
+    // GET logged in user's dashboard
+    .get(UsersController.dashboard);
+
+router.route('/')
+    // GET index action
+    .get(UsersController.index)
+    // POST new user action
+    .post(nonRedundantAccess, utils.validateNonce, UsersController.createUser);
+
+router.route('/:user_id/edit')
+    // GET edit form action
+    .get(restrictAccess, UsersController.editForm)
+    // POST an update on the user
+    .post(restrictAccess, utils.validateNonce, UsersController.updateUser);
+
+router.route('/:user_id/delete')
+    // GET delete form action
+    .get(restrictAccess, UsersController.deleteForm)
+    // POST delete user action
+    .post(restrictAccess, utils.validateNonce, UsersController.deleteUser);
+
+router.route('/:user_id/')
+    // GET the user
+    .get(UsersController.showUser)
+    // DELETE the user
+    .delete(restrictAccess, utils.validateNonce, UsersController.deleteUser)
+    // PUT an update on the user
+    .put(restrictAccess, utils.validateNonce, UsersController.updateUser);
 
 
 module.exports = router;
