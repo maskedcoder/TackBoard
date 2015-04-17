@@ -42,7 +42,8 @@ app.use(session({
 app.use(function (req, res, next) {
     if (req.cookies["user"]) {
         models.User.find({
-            where: { uid: req.cookies.user }
+            where: { uid: req.cookies.user },
+            attributes: ['name', 'id']
         }).then(function (user) {
             req.account = user;
             next();
