@@ -3,27 +3,5 @@
     <h2><a href="/users">Home</a></h2>
     <p><b>Name:</b> <%= user.name %></p>
     <a href="<%= user.id %>/edit">Edit</a>
-    <a href="#destroy">Delete my account</a>
-    <input type="hidden" name="nonce" value="<%= nonce %>" />
-<script type="text/javascript">
-    jQuery(function ($) {
-        $('a[href="#destroy"]').on('click', function (e) {
-            e.preventDefault();
-            if (confirm("Are you sure you want to delete your account: '<%= user.name %>'?\n\n" + 
-                        "This action cannot be undone.")) {
-                $.ajax({
-                    method: 'DELETE',
-                    url: '<%= user.id %>',
-                    dataType: 'json',
-                    data: {nonce: $('input[name="nonce"]').val()}
-                }).success(function () {
-                    window.location.href = "/users";
-                }).error(function () {
-                    alert("The account could not be deleted.");
-                });
-            }
-            return false;
-        });
-    });
-</script>
+    <a href="<%= user.id %>/delete">Delete my account</a>
 <%- include('../layouts/_footer'); %>

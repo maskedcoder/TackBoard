@@ -138,12 +138,10 @@ var UsersController = {
      */
      dashboard: function (req, res) {
         if (req.account) {
-            var nonce = utils.setupNonce(req, 'users/:user_id');
             res.render('users/dashboard', {
                 account: "hide",
                 title: 'My Account Dashboard',
-                user: req.account,
-                nonce: nonce
+                user: req.account
             });
         } else {
             res.redirect(302, '/users/login');
@@ -186,7 +184,7 @@ var UsersController = {
             where: { id: req.params.user_id }
         }).then(function (user) {
             res.render('users/delete', {
-              account: req.account,
+              account: 'hide',
               title: 'Confirm Delete',
               user: user,
               nonce: nonce
