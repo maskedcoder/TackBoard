@@ -10,9 +10,10 @@ var restrictAccess = function (request, response, next) {
     if (request.account && request.account.id == request.params.user_id) {
         next();
     } else {
-        response.status(401).render('users/deny', {
+        response.status(401).render('notifications/error', {
                 account: "hide",
-                title: 'Access denied'
+                title: 'Access denied',
+                text: 'You cannot make changes to this user.'
         });
     }
 };
@@ -237,7 +238,7 @@ var UsersController = {
      */
      logoutForm: function (req, res) {
         var nonce = utils.setupNonce(req, 'users/logout');
-        res.render('users/logout_form', {
+        res.render('users/logout', {
             account: 'hide',
             title: 'Confirm Logout',
             user: req.account, // Since we aren't using the account that was fetched in the header, why not use it here and skip another call to the database?
@@ -395,9 +396,10 @@ var UsersController = {
      */
      logoutUser: function (req, res) {
         res.clearCookie('user', { httpOnly: true })
-            .render('users/logout', {
+            .render('notifications/information', {
                 account: "hide",
-                title: 'Logout'
+                title: 'Logout',
+                text: 'Logged out successfully.'
         });
     }
 };

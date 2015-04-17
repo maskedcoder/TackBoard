@@ -1,10 +1,11 @@
 <%- include('../layouts/_header'); %>
     <h1><%= title %></h1>
-    <p>Logged out successfully.</p>
-    <p>If you are not automatically directed to the main page, <a href="/">click here</a>.</p>
-    <script>
-        window.setTimeout(function () {
-            window.location.assign("/");
-        }, 2000);
-    </script>
+    <p>Are you sure you want to log out?</p>
+    <form method="POST" action="">
+        <input type="hidden" name="nonce" value="<%= nonce %>" />
+        <button type="submit">Yes, log me out</button>
+    </form>
+    <p>
+        <a href="/users/">No, I do not want to log out</a>
+    </p>
 <%- include('../layouts/_footer'); %>
