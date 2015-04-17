@@ -160,7 +160,8 @@ var UsersController = {
      editForm: function (req, res) {
         var nonce = utils.setupNonce(req, 'users/:user_id');
         models.User.find({
-            where: { id: req.params.user_id }
+            where: { id: req.params.user_id },
+            attributes: ['id', 'name']
         }).then(function (user) {
             res.render('users/edit', {
               account: req.account,
@@ -182,7 +183,8 @@ var UsersController = {
      deleteForm: function (req, res) {
         var nonce = utils.setupNonce(req, 'users/:user_id');
         models.User.find({
-            where: { id: req.params.user_id }
+            where: { id: req.params.user_id },
+            attributes: ['id', 'name']
         }).then(function (user) {
             res.render('users/delete', {
               account: 'hide',
@@ -286,7 +288,11 @@ var UsersController = {
                     res.redirect(201, '/users/' + user.id);
                 },
                 'json': function () {
-                    res.status(201).json(user);
+                    // Can't just send json(user), because it exposes sensitive information
+                    res.status(201).json({
+                        name: user.name,
+                        id: user.id
+                    });
                 }
             });
         }, function (error) {
@@ -327,7 +333,17 @@ var UsersController = {
                 name: updatedUser.name,
                 password: password
             }).then(function (update) {
-                res.status(201).json(update);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.redirect(201, '/users/' + update.id);
+                },
+                'json': function () {
+                    // Can't just send json(update), because it exposes sensitive information
+                    res.status(201).json({
+                        name: update.name,
+                        id: update.id
+                    });
+                }
             });
         });
     },
