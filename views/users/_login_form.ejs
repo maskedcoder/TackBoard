@@ -1,5 +1,6 @@
             <fieldset>
                 <input type="hidden" name="nonce" value="<%= nonce %>" />
+                <input class="js-nojavascript" type="hidden" name="nojs" value="true" />
                 <p>
                     <label for="userName">Name:</label>
                     <input id="userName" type="text" name="name" value="" required/>
@@ -11,4 +12,5 @@
                 <p>
                     <input type="submit" />
                 </p>
+                <p class="js-nojswarning"><strong>Warning: </strong> You seem to have JavaScript disabled. TackBoard will still be functional without it, but your passwords will not be encrypted before being sent to the server.</p>
             </fieldset>

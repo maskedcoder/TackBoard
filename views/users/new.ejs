@@ -8,11 +8,13 @@
     <script type="text/javascript" src="/javascripts/sha512.min.js"></script>
     <script type="text/javascript">
         jQuery(function ($) {
+            $('.js-nojavascript').val(false);
+            $('.js-nojswarning').remove();
             $('#new-form').validate({
                 submitHandler: function (form) {
                     var data = $(form).serialize().replace(/password=([^&]*)/, function (_, password) {
                         var shaObj = new jsSHA(password, 'TEXT');
-                        return 'password='+shaObj.getHash('SHA-512', 'HEX');
+                        return 'password=' + shaObj.getHash('SHA-512', 'HEX');
                     });
                     $.ajax({
                         method: 'POST',

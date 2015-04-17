@@ -264,9 +264,19 @@ var UsersController = {
         var sha512 = crypto.createHash('sha512');
         sha512.update(''+ +new Date());
 
+        password = newUser.password;
+
+        // If the user is not using javascript, the password cannot be encoded client-side
+        // So we have to encode it server-side
+        if (newUser.nojs) {
+            password = crypto.createHash('sha512')
+                             .update(password)
+                             .digest('hex');
+        }
+
         models.User.create({
             name: newUser.name,
-            password: newUser.password,
+            password: password,
             uid: sha512.digest('hex')
         }).then(function (user) {
             res.cookie('user', user.uid, { httpOnly: true });
@@ -301,9 +311,20 @@ var UsersController = {
         models.User.find({
             where: { id: req.params.user_id }
         }).then(function (user) {
+
+            password = updatedUser.password;
+
+            // If the browser is not using javascript, the password cannot be encoded client-side
+            // So we have to encode it server-side
+            if (updatedUser.nojs) {
+                password = crypto.createHash('sha512')
+                                 .update(password)
+                                 .digest('hex');
+            }
+
             user.update({
                 name: updatedUser.name,
-                password: updatedUser.password
+                password: password
             }).then(function (update) {
                 res.status(201).json(update);
             });
@@ -342,7 +363,17 @@ var UsersController = {
         models.User.find({
             where: { name: login.name }
         }).then(function (user) {
-            if (user.password === login.password) {
+
+            password = login.password;
+            // If the browser is not using javascript, the password cannot be encoded client-side
+            // So we have to encode it server-side
+            if (login.nojs) {
+                password = crypto.createHash('sha512')
+                                    .update(password)
+                                    .digest('hex');
+            }
+
+            if (user.password === password) {
                 res.cookie('user', user.uid, { httpOnly: true })
                     .status(200)
                     .set('url', '/')
