@@ -1,116 +1,26 @@
+process.env.NODE_ENV = 'test';
+
 var request = require('supertest');
 var expect = require('expect.js');
 var cheerio = require('cheerio');
 
-/**
- * Set environment to 'test'
- */
-
-process.env.NODE_ENV = 'test';
-
-/**
- * Module dependencies.
- */
-
+// These are needed to run a server
 var app = require('../app');
-var debug = require('debug')('TackBoard:server');
 var http = require('http');
 var models = require("../models");
 
-/**
- * Get port from environment and store in Express.
- */
 
-var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
-
-/**
- * Store the server so we can close it later.
- */
-
+// Store the server so we can close it later.
 var server;
 
-/**
- * Sync the database models.
- */
+before(function () {
+    app.set('port', 3000);
 
-models.sequelize.sync().then(function () {
-
-  /**
-   * Create HTTP server.
-   */
-
-  server = http.createServer(app);
-
-  /**
-   * Listen on provided port, on all network interfaces.
-   */
-
-  server.listen(app.get('port'));
-  server.on('error', onError);
-  //server.on('listening', onListening);
-
-  /**
-   * Event listener for HTTP server "error" event.
-   */
-
-  function onError(error) {
-    if (error.syscall !== 'listen') {
-      throw error;
-    }
-
-    var bind = typeof port === 'string'
-      ? 'Pipe ' + port
-      : 'Port ' + port
-
-    // handle specific listen errors with friendly messages
-    switch (error.code) {
-      case 'EACCES':
-        console.error(bind + ' requires elevated privileges');
-        process.exit(1);
-        break;
-      case 'EADDRINUSE':
-        console.error(bind + ' is already in use');
-        process.exit(1);
-        break;
-      default:
-        throw error;
-    }
-  }
-
-  /**
-   * Event listener for HTTP server "listening" event.
-   */
-
-  function onListening() {
-    var addr = server.address();
-    var bind = typeof addr === 'string'
-      ? 'pipe ' + addr
-      : 'port ' + addr.port;
-    debug('Listening on ' + bind);
-  }
-
+    models.sequelize.sync().then(function () {
+        server = http.createServer(app);
+        server.listen(app.get('port'));
+    });
 });
-
-/**
-* Normalize a port into a number, string, or false.
-*/
-
-function normalizePort(val) {
-var port = parseInt(val, 10);
-
-if (isNaN(port)) {
-  // named pipe
-  return val;
-}
-
-if (port >= 0) {
-  // port number
-  return port;
-}
-
-return false;
-}
 
 
 after(function () {
@@ -118,6 +28,7 @@ after(function () {
         console.log('Shutting down the server');
     });
 });
+
 
 describe('Users API', function () {
     // nonce will hold onto the nonces from forms being loaded, so they can be posted to the server
