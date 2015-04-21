@@ -1,6 +1,19 @@
 var crypto = require('crypto');
 
 /**
+ * Logs a string except when the environment is 'test'. This keeps the mocha tests from getting cluttered with logging. Credit: dankohn, http://stackoverflow.com/a/22710649
+ *
+ * @param {String}  string    
+ *
+ * @private
+ */
+var logExceptOnTest = function(string) {
+  if (process.env.NODE_ENV !== 'test') {
+    console.log(string);
+  }
+};
+
+/**
  * Utility functions for routes
  *
  * @module utils
@@ -90,13 +103,13 @@ module.exports = {
         var expectedNonce = nonceStore[action];
 
         if (expectedNonce && expectedNonce === nonce) {
-            console.log("\nNONCE IS VALIDATED\n");
+            logExceptOnTest("\nNONCE IS VALIDATED\n");
 
             // remove the nonce
             delete nonceStore[action];
             next();
         } else {
-            console.log("\nINVALID NONCE\n");
+            logExceptOnTest("\nINVALID NONCE\n");
             response.sendStatus(401);
         }
     }
