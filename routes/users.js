@@ -70,6 +70,47 @@ var nonRedundantAccess = function (request, response, next) {
 var UsersController = {
 
     /**
+     * Find user (middleware)
+     *
+     * Finds a user by user ID. If no user is found, respond with a 404.
+     *
+     * @param {Object}  req        The request object
+     * @param {Object}  res        The response object
+     * @param {Function}  next     The next middleware
+     * @param {String}  user_id    The id of the user to get
+     */
+    findUser: function (req, res, next, user_id) {
+        models.User.find({
+            where: { id: user_id },
+            attributes: ['id', 'name']
+        }).then(function (user) {
+            if (user) {
+                // User found
+                req.user = user;
+                next();
+            } else {
+                // User not found
+                res.status(404);
+                utils.respondTo(req, res, {
+                    'html': function () {
+                        res.render('notifications/error', {
+                            account: 'hide',
+                            title: "User not found",
+                            text: "Unable to find user #"+user_id,
+                        });
+                    },
+                    'json': function () {
+                        res.json({
+                            'type': 'error',
+                            'text': 'Invalid - User does not exist'
+                        });
+                    }
+                });
+            }
+        });
+    },
+
+    /**
      * Index action
      *
      * Fetches a listing of all users. Corresponds to GET /users/
@@ -106,26 +147,21 @@ var UsersController = {
      * @param {Object}  res    The response object
      */
      showUser: function (req, res) {
-        if (req.params.user_id == req.account.id && req.accepts(['html', 'json']) == 'html') {
+        if (req.user.id == req.account.id && req.accepts(['html', 'json']) == 'html') {
             res.redirect(303, '/users/dashboard');
             return;
         }
-        models.User.find({
-            where: { id: req.params.user_id },
-            attributes: ['id', 'name']
-        }).then(function (user) {
-            utils.respondTo(req, res, {
-                'html': function () {
-                    res.render('users/show', {
-                        account: req.account,
-                        title: user.name,
-                        user: user
-                    });
-                },
-                'json': function () {
-                    res.json(user);
-                }
-            });
+        utils.respondTo(req, res, {
+            'html': function () {
+                res.render('users/show', {
+                    account: req.account,
+                    title: req.user.name,
+                    user: req.user
+                });
+            },
+            'json': function () {
+                res.json(req.user);
+            }
         });
     },
 
@@ -159,16 +195,11 @@ var UsersController = {
      */
      editForm: function (req, res) {
         var nonce = utils.setupNonce(req, 'users/:user_id');
-        models.User.find({
-            where: { id: req.params.user_id },
-            attributes: ['id', 'name']
-        }).then(function (user) {
-            res.render('users/edit', {
-              account: req.account,
-              title: 'Editing '+user.name,
-              user: user,
-              nonce: nonce
-            });
+        res.render('users/edit', {
+            account: req.account,
+            title: 'Editing '+req.user.name,
+            user: req.user,
+            nonce: nonce
         });
     },
 
@@ -182,16 +213,11 @@ var UsersController = {
      */
      deleteForm: function (req, res) {
         var nonce = utils.setupNonce(req, 'users/:user_id');
-        models.User.find({
-            where: { id: req.params.user_id },
-            attributes: ['id', 'name']
-        }).then(function (user) {
-            res.render('users/delete', {
-              account: 'hide',
-              title: 'Confirm Delete',
-              user: user,
-              nonce: nonce
-            });
+        res.render('users/delete', {
+            account: 'hide',
+            title: 'Confirm Delete',
+            user: req.user,
+            nonce: nonce
         });
     },
 
@@ -318,8 +344,22 @@ var UsersController = {
                 }
             });
         }, function (error) {
-            console.log(error);
-            res.status(400).send("Invalid name and/or password");
+            res.status(400);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('notifications/error', {
+                        account: 'hide',
+                        title: 'Error creating user',
+                        text: 'Invalid name and/or password'
+                    });
+                },
+                'json': function () {
+                    response.json({
+                        'type': 'error',
+                        'text': 'Invalid name and/or password'
+                    });
+                }
+            });
         });
     },
 
@@ -334,46 +374,74 @@ var UsersController = {
      updateUser: function (req, res) {
         var updatedUser = req.body;
         if (!updatedUser.name || !updatedUser.password) {
-            res.status(400).send("Invalid - missing name and/or password");
+            res.status(400);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('notifications/error', {
+                        account: 'hide',
+                        title: 'Error updating user',
+                        text: 'Invalid - missing name and/or password'
+                    });
+                },
+                'json': function () {
+                    response.json({
+                        'type': 'error',
+                        'text': 'Invalid - missing name and/or password'
+                    });
+                }
+            });
             return false;
         }
-        models.User.find({
-            where: { id: req.params.user_id }
-        }).then(function (user) {
 
-            password = updatedUser.password;
+        password = updatedUser.password;
 
-            // If the browser is not using javascript, the password cannot be encoded client-side
-            // So we have to encode it server-side
-            if (updatedUser.nojs) {
-                password = crypto.createHash('sha512')
-                                 .update(password)
-                                 .digest('hex');
-            }
+        // If the browser is not using javascript, the password cannot be encoded client-side
+        // So we have to encode it server-side
+        if (updatedUser.nojs) {
+            password = crypto.createHash('sha512')
+                                .update(password)
+                                .digest('hex');
+        }
 
-            user.update({
-                name: updatedUser.name,
-                password: password
-            }).then(function (update) {
-                res.status(201)
-                   .set('Location', '/users/' + update.id);
-                utils.respondTo(req, res, {
-                    'html': function () {
-                        res.render('notifications/information', {
-                            account: 'hide',
-                            title: 'User updated',
-                            text: 'The user was successfully updated.',
-                            link: '/users/' + update.id
-                        });
-                    },
-                    'json': function () {
-                        // Can't just send json(update), because it exposes sensitive information
-                        res.status(201).json({
-                            name: update.name,
-                            id: update.id
-                        });
-                    }
-                });
+        req.user.update({
+            name: updatedUser.name,
+            password: password
+        }).then(function (update) {
+            res.status(201)
+                .set('Location', '/users/' + update.id);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('notifications/information', {
+                        account: 'hide',
+                        title: 'User updated',
+                        text: 'The user was successfully updated.',
+                        link: '/users/' + update.id
+                    });
+                },
+                'json': function () {
+                    // Can't just send json(update), because it exposes sensitive information
+                    res.status(201).json({
+                        name: update.name,
+                        id: update.id
+                    });
+                }
+            });
+        }, function (error) {
+            res.status(400);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('notifications/error', {
+                        account: 'hide',
+                        title: 'Error updating user',
+                        text: 'Invalid name and/or password'
+                    });
+                },
+                'json': function () {
+                    response.json({
+                        'type': 'error',
+                        'text': 'Invalid name and/or password'
+                    });
+                }
             });
         });
     },
@@ -387,27 +455,23 @@ var UsersController = {
      * @param {Object}  res    The response object
      */
      deleteUser: function (req, res) {
-        models.User.find({
-            where: { id: req.params.user_id }
-        }).then(function (user) {
-            user.destroy().then(function () {
-                res.clearCookie('user', { httpOnly: true }) // Log out
-                    .status(200);
-                utils.respondTo(req, res, {
-                    'html': function () {
-                        res.render('notifications/information', {
-                            account: 'hide',
-                            title: 'User deleted',
-                            text: 'The user was successfully deleted.'
-                        });
-                    },
-                    'json': function () {
-                        res.json({
-                            type: 'info',
-                            text: 'The user was successfully deleted.'
-                        });
-                    }
-                });
+        req.user.destroy().then(function () {
+            res.clearCookie('user', { httpOnly: true }) // Log out
+                .status(200);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('notifications/information', {
+                        account: 'hide',
+                        title: 'User deleted',
+                        text: 'The user was successfully deleted.'
+                    });
+                },
+                'json': function () {
+                    res.json({
+                        type: 'info',
+                        text: 'The user was successfully deleted.'
+                    });
+                }
             });
         });
     },
@@ -422,6 +486,27 @@ var UsersController = {
      */
      loginUser: function (req, res) {
         var login = req.body;
+
+        if (!login.name || !login.password) {
+            res.status(401);
+            utils.respondTo(req, res, {
+                'html': function () {
+                    res.render('notifications/error', {
+                        account: 'hide',
+                        title: 'Error logging in',
+                        text: 'Invalid - please provide both a name and a password'
+                    });
+                },
+                'json': function () {
+                    response.json({
+                        'type': 'error',
+                        'text': 'Invalid - missing name and/or password'
+                    });
+                }
+            });
+            return false;
+        }
+
         models.User.find({
             where: { name: login.name }
         }).then(function (user) {
@@ -435,14 +520,29 @@ var UsersController = {
                                     .digest('hex');
             }
 
-            if (user.password === password) {
+            if (user && user.password === password) {
                 res.cookie('user', user.uid, { httpOnly: true })
                     .status(200)
                     .set('url', '/')
                     .set('Refresh', '0')
                     .send("Successful login");
             } else {
-                res.sendStatus(401);
+                res.status(401);
+                utils.respondTo(req, res, {
+                    'html': function () {
+                        res.render('notifications/error', {
+                            account: 'hide',
+                            title: 'Error logging in',
+                            text: 'Invalid - incorrect name and/or password'
+                        });
+                    },
+                    'json': function () {
+                        response.json({
+                            'type': 'error',
+                            'text': 'Invalid - incorrect name and/or password'
+                        });
+                    }
+                });
             }
         });
     },
@@ -464,6 +564,9 @@ var UsersController = {
         });
     }
 };
+
+// Load user when an id is given
+router.param('user_id', UsersController.findUser);
 
 router.route('/login/')
     // GET the login page
