@@ -79,7 +79,7 @@ describe('Users API', function () {
 
         it('eliminates blank usernames', function (done) {
             setupNonce('/users/signup', function () {
-                agent.post('/users/signup')
+                agent.post('/users/')
                     .send({
                         nonce: nonce,
                         nojs: 'true',
@@ -93,7 +93,7 @@ describe('Users API', function () {
 
         it('eliminates blank passwords', function (done) {
             setupNonce('/users/signup', function () {
-                agent.post('/users/signup')
+                agent.post('/users/')
                     .send({
                         nonce: nonce,
                         nojs: 'true',
@@ -107,7 +107,7 @@ describe('Users API', function () {
 
         it('eliminates missing passwords', function (done) {
             setupNonce('/users/signup', function () {
-                agent.post('/users/signup')
+                agent.post('/users/')
                     .send({
                         nonce: nonce,
                         nojs: 'true',
@@ -120,7 +120,7 @@ describe('Users API', function () {
 
         it('eliminates missing usernames', function (done) {
             setupNonce('/users/signup', function () {
-                agent.post('/users/signup')
+                agent.post('/users/')
                     .send({
                         nonce: nonce,
                         nojs: 'true',
@@ -133,7 +133,7 @@ describe('Users API', function () {
 
         it('doesn\'t allow users to have the same name', function (done) {
             setupNonce('/users/signup', function () {
-                agent.post('/users/signup')
+                agent.post('/users/')
                     .send({
                         nonce: nonce,
                         nojs: 'true',
@@ -149,14 +149,14 @@ describe('Users API', function () {
             var secretSQL = 'Test\',\'aba9cs\',\'acb83\',\'2015-04-15 12:25:34\',\'2015-04-15 12:25:34\'); DROP TABLE posts;#';
             var link = '';
             setupNonce('/users/signup', function () {
-                agent.post('/users/signup')
+                agent.post('/users/')
                     .send({
                         nonce: nonce,
                         nojs: 'true',
                         name: secretSQL,
                         password: 'Test Password'
                     })
-                    .expect(200)
+                    .expect(201)
                     .end(function (err, res) {
                         if (err) return done(err);
 
@@ -167,7 +167,7 @@ describe('Users API', function () {
                                 .send({
                                     nonce: nonce
                                 })
-                                .expect(201, done);
+                                .expect(200, done);
                         });
                     });
             });
@@ -403,6 +403,17 @@ describe('Users API', function () {
         it('loads a user\'s page', function (done) {
             agent.get(userLink)
                 .expect(200, done);
+        });
+
+        it('doesn\'t find non-existant users', function (done) {
+            // If auto-increment and primary keys are working, subtracting 1
+            // from the user ID will result in an ID of a user that was just deleted
+            var nonUserLink = userLink.replace(/(\d)[\\\/]?$/, function (_, digit) {
+                return Number(digit) - 1;
+            });
+
+            agent.get(nonUserLink)
+                .expect(404, done);
         });
 
     });
