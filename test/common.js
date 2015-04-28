@@ -25,3 +25,4 @@ after(function () {
 });
 
 require('./users')(app);
+require('./posts')(app);
