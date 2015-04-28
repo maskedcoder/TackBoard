@@ -13,13 +13,35 @@ module.exports = function (sequelize, DataTypes) {
             }
         },
         description: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(3750),
             validate: {
                 notNull: {
                     msg: "Description missing"
+                }
+            }
+        },
+        link: {
+            type: DataTypes.STRING,
+            validate: {
+                notNull: {
+                    msg: "Link missing"
                 },
                 notEmpty: {
-                    msg: "Description missing"
+                    msg: "Link missing"
+                },
+                isUrl: {
+                    msg: "Bad link"
+                }
+            }
+        },
+        data: {
+            type: DataTypes.TEXT,
+            validate: {
+                notNull: {
+                    msg: "Data missing"
+                },
+                notEmpty: {
+                    msg: "Data missing"
                 }
             }
         }
