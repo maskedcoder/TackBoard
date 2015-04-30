@@ -249,7 +249,7 @@ module.exports = function (app) {
                         .end(function () {
 
                             // Actual test is here
-                            agent.get('posts/1/edit')
+                            agent.get('/posts/1/edit')
                                 .expect(401, done);
                         });
                 });
@@ -390,8 +390,7 @@ module.exports = function (app) {
         describe('Delete pages', function () {
 
             it('will not delete a post created by another user', function (done) {
-                // TODO: There needs to be a post with a different owner in the test database
-                agent.get('posts/1/delete')
+                agent.get('/posts/1/delete')
                     .expect(401, done);
             });
 
