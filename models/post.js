@@ -4,28 +4,17 @@ module.exports = function (sequelize, DataTypes) {
         title: {
             type: DataTypes.STRING,
             validate: {
-                notNull: {
-                    msg: "Title missing"
-                },
                 notEmpty: {
                     msg: "Title missing"
                 }
             }
         },
         description: {
-            type: DataTypes.STRING(3750),
-            validate: {
-                notNull: {
-                    msg: "Description missing"
-                }
-            }
+            type: DataTypes.STRING(3750)
         },
         link: {
             type: DataTypes.STRING,
             validate: {
-                notNull: {
-                    msg: "Link missing"
-                },
                 notEmpty: {
                     msg: "Link missing"
                 },
@@ -37,9 +26,6 @@ module.exports = function (sequelize, DataTypes) {
         data: {
             type: DataTypes.TEXT,
             validate: {
-                notNull: {
-                    msg: "Data missing"
-                },
                 notEmpty: {
                     msg: "Data missing"
                 }
