@@ -257,11 +257,15 @@ var PostsController = {
             boo: 'far'
         };
 
+        var link = newPost.link;
+        if (link.length < 4 || link.substr(0,4) != 'http')
+            link = 'http://' + link;
+
         models.Post.create({
             title: newPost.title,
-            link: newPost.link,
+            link: link,
             description: newPost.description || '',
-            data: JSON.stringify(dummyData.stringify),
+            data: JSON.stringify(dummyData),
             UserId: req.account.id
         }).then(function (post) {
             res.status(201)
@@ -341,11 +345,15 @@ var PostsController = {
             boo: 'far'
         };
 
+        var link = update.link;
+        if (link.length < 4 || link.substr(0,4) != 'http')
+            link = 'http://' + link;
+
         req.post.update({
             title: update.title,
-            link: update.link,
+            link: link,
             description: update.description || '',
-            data: JSON.stringify(dummyData.stringify),
+            data: JSON.stringify(dummyData)
         }).then(function (post) {
             res.status(201)
                 .set('Location', '/posts/' + post.id);
