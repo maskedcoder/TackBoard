@@ -9,7 +9,6 @@
             </h3>
             <p><%= post.description %></p>
             <p><strong>-- <a href="/users/<%= post.UserId %>"><%= post.User.name %></a></strong></p>
-            <a href="/posts/<%= post.id %>/edit">Edit</a>
         </li>
     <% }); %>
     </ul>

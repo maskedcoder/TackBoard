@@ -1,6 +1,7 @@
 <%- include('../layouts/_header'); %>
     <h1><%= title %></h1>
-    <form id="post-form" action="/posts" method="POST" data-method="POST">
+    <form id="new-form" action="/posts" method="POST">
         <%- include('_form'); %>
     </form>
+    <script type="text/javascript" src="/javascripts/jquery-validate.min.js"></script>
 <%- include('../layouts/_footer'); %>

@@ -1,0 +1,28 @@
+<%- include('../layouts/_header'); %>
+    <h1><%= title %></h1>
+    <p><strong>Are you sure you want to delete "<%= post.title %>"?</strong> This action <em>cannot</em> be undone.</p>
+    <form class="js-deleteform" method="POST" action="">
+        <input type="hidden" name="nonce" value="<%= nonce %>" />
+        <button type="submit">Yes, delete this post</button>
+    </form>
+    <p>
+        <a href="/posts/<%= post.id %>">Nevermind</a>
+    </p>
+    <script type="text/javascript">
+        jQuery(function ($) {
+            $('.js-deleteform').submit(function (e) {
+                e.preventDefault();
+                $.ajax({
+                    method: 'DELETE',
+                    url: '/posts/<%= post.id %>',
+                    data: $(this).serialize(),
+                    dataType: 'json'
+                }).success(function () {
+                    window.location.href = "/posts";
+                }).error(function () {
+                    alert("The post could not be deleted.");
+                });
+            });
+        });
+    </script>
+<%- include('../layouts/_footer'); %>
