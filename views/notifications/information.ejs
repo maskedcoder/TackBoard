@@ -2,7 +2,7 @@
     <h1><%= title %></h1>
     <p><%= text %></p>
 
-    <% if (!this['link']) var link = '/'; %>
+    <% if (link === undefined) { var link = '/'; } %>
 
     <p>If you are not automatically redirected, <a href="<%= link %>">click here</a>.</p>
     <script>
