@@ -5,7 +5,15 @@ var router = express.Router();
 
 var utils = require('./utils');
 
-// restrictAccess middleware keeps users from being edited by others
+/**
+ * Restrict Access (middleware)
+ * 
+ * Keeps users from being edited by others
+ *
+ * @param {Object}  req        The request object
+ * @param {Object}  res        The response object
+ * @param {Function}  next     The next middleware
+ */
 var restrictAccess = function (request, response, next) {
     if (request.account && request.account.id == request.params.user_id) {
         next();
@@ -18,7 +26,15 @@ var restrictAccess = function (request, response, next) {
     }
 };
 
-// nonRedundantAccess middleware keeps users from logging in multiple times
+/**
+ * Non-Redundant Access (middleware)
+ * 
+ * Keeps users from logging in multiple times
+ *
+ * @param {Object}  req        The request object
+ * @param {Object}  res        The response object
+ * @param {Function}  next     The next middleware
+ */
 var nonRedundantAccess = function (request, response, next) {
     if (request.account) {
         utils.respondTo(request, response, {
@@ -96,7 +112,7 @@ var UsersController = {
                         res.render('notifications/error', {
                             account: 'hide',
                             title: "User not found",
-                            text: "Unable to find user #"+user_id,
+                            text: "Unable to find user #"+user_id
                         });
                     },
                     'json': function () {

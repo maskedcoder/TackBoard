@@ -4,7 +4,15 @@ var router = express.Router();
 
 var utils = require('./utils');
 
-// restrictAccess middleware keeps posts from being edited by non-owners
+/**
+ * Restrict Access (middleware)
+ * 
+ * Keeps posts from being edited by non-owners
+ *
+ * @param {Object}  req        The request object
+ * @param {Object}  res        The response object
+ * @param {Function}  next     The next middleware
+ */
 var restrictAccess = function (request, response, next) {
     if (request.account && request.account.id == request.post.User.id) {
         next();
@@ -17,7 +25,15 @@ var restrictAccess = function (request, response, next) {
     }
 };
 
-// requireLogin middleware requires users to login before editing/creating posts
+/**
+ * Require Login (middleware)
+ * 
+ * Requires users to login before editing/creating posts
+ *
+ * @param {Object}  req        The request object
+ * @param {Object}  res        The response object
+ * @param {Function}  next     The next middleware
+ */
 var requireLogin = function (request, response, next) {
     if (request.account) {
         next();
